@@ -2,7 +2,7 @@
 
 <!-- 📌 IMAGE — Results View (retain existing project image)
      Source: reports/assets/phase5_results.png -->
-<img src="reports/assets/phase5_results.png" alt="JeevanSetu Results View" width="100%"/>
+<!-- <img src="reports/assets/phase5_results.png" alt="JeevanSetu Results View" width="100%"/> -->
 
 # 🌉 JeevanSetu — AI Estate Conflict Detector
 
