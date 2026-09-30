@@ -17,7 +17,11 @@
 
 > *JeevanSetu reads a person's will, nomination forms, and insurance beneficiary forms, extracts who is named for each asset, and flags real inconsistencies between those documents using a small, sourced, India-scoped rule set.*
 
-> **Synthetic demo data only. Not legal advice.** Do not upload real personal, financial, identity, or estate documents. Findings are informational and require review by a licensed professional and the relevant institution.
+> **Synthetic sample data only. Not legal advice.** Do not upload real personal, financial, identity, or estate documents. Findings are informational and require review by a licensed professional and the relevant institution.
+
+### 🌐 Live Application
+
+**[Open JeevanSetu — Live Application](https://jeevansetu-frontend-e82t.onrender.com/)**
 
 </div>
 
@@ -26,11 +30,12 @@
 ## 📌 Table of Contents
 
 - [Overview](#-overview)
-- [What the Demo Shows](#-what-the-demo-shows)
-- [Judge Demo Access](#-judge-demo-access)
+- [Live Demo](#-live-demo)
+- [Sample Outcomes](#-sample-outcomes)
+- [Judge Access](#-judge-access)
 - [Quick Start](#-quick-start)
-- [Four-Minute Demo Script](#-four-minute-demo-script)
-- [Demo Reset](#-demo-reset)
+- [Application Walkthrough](#-application-walkthrough)
+- [Reset Sample Data](#-reset-sample-data)
 - [What Is Real and What Is Simplified](#-what-is-real-and-what-is-simplified)
 - [Known Limitations](#-known-limitations)
 - [Rule Set & Sources](#-the-rule-set-and-its-sources)
@@ -59,13 +64,23 @@ JeevanSetu is an **AI-assisted estate conflict detector** designed around a narr
 
 ---
 
-## 🎯 What the Demo Shows
+## 🌐 Live Demo
+
+The JeevanSetu application is deployed and available here:
+
+**🔗 https://jeevansetu-frontend-e82t.onrender.com/**
+
+> **Application environment:** The deployed application is intended for evaluation using the synthetic sample data described in this README. Do not upload real personal, financial, identity, or estate documents.
+
+---
+
+## 🎯 Sample Outcomes
 
 The conflict persona has a will giving a bank account to a daughter while the registered bank nomination for that same account names a spouse. The engine reports one high-priority conflict, cites both sources, and scores the persona **75/100**.
 
 Correcting the nominee in the vault and re-running detection clears the conflict and raises the score to **100**. Pressing **Undo last fix** puts the conflict back.
 
-### Seeded Demo Personas
+### Seeded Sample Personas
 
 | Persona | Outcome | Rule or Marker | Score |
 |---|---|---|---:|
@@ -83,14 +98,10 @@ Correcting the nominee in the vault and re-running detection clears the conflict
 </div>
 
 ---
-### 🌐 Live Demo
 
-**[Open JeevanSetu — Deployed Application](https://jeevansetu-frontend-e82t.onrender.com/)**
+## 🔐 Judge Access
 
-
-## 🔐 Judge Demo Access
-
-> **Synthetic demo environment only.** These credentials are for the judging/demo flow described in this README.
+> **Synthetic data environment only.** These credentials are provided for evaluating the deployed application described in this README.
 
 | Field | Value |
 |---|---|
@@ -104,7 +115,7 @@ Correcting the nominee in the vault and re-running detection clears the conflict
 ### Prerequisites
 
 - Docker Desktop with Docker Compose
-- A Gemini API key is **optional** for the demo
+- A Gemini API key is **optional** for live extraction
 
 ### 1. Clone the Repository
 
@@ -125,7 +136,7 @@ cp .env.example .env            # optional: add GEMINI_API_KEY for live extracti
 docker compose up --build --detach
 ```
 
-### 4. Seed the Demo
+### 4. Seed Sample Data
 
 ```bash
 docker compose exec backend python scripts/seed_demo.py --yes
@@ -133,10 +144,16 @@ docker compose exec backend python scripts/seed_demo.py --yes
 
 ### 5. Open the Application
 
+**Local:**
 ```text
 Frontend : http://localhost:3000
 API docs : http://localhost:8000/docs
 Health   : http://localhost:8000/health
+```
+
+**Deployed:**
+```text
+https://jeevansetu-frontend-e82t.onrender.com/
 ```
 
 Stop with:
@@ -149,7 +166,7 @@ The SQLite file lives at `backend/data/jeevansetu.db` and is ignored by Git.
 
 ---
 
-## 🎬 Four-Minute Demo Script
+## 🎬 Application Walkthrough
 
 ### 1. Open Aarav Demo-Mehta
 
@@ -205,17 +222,17 @@ Her bank nomination and will name different people, which would normally be `BAN
 
 ---
 
-## ♻️ Demo Reset
+## ♻️ Reset Sample Data
 
 ### Pre-verified Snapshot
 
-No API key is needed. The interface labels this as **not live AI**.
+No API key is needed. The interface labels the pre-verified data as **not live AI**.
 
 ```bash
 docker compose exec backend python scripts/seed_demo.py --yes
 ```
 
-### Real Gemini Extraction
+### Live Gemini Extraction
 
 Requires `GEMINI_API_KEY`:
 
@@ -231,7 +248,7 @@ docker compose exec backend python scripts/seed_demo.py --yes --mode live
 
 - Upload of synthetic PDF, image, and text documents with **size, extension, MIME, and content-signature validation**
 - Gemini classification and structured field extraction, with every value carrying its **exact source text, a locator, and a confidence**
-- The deterministic conflict engine: **all seven documented rules**, in Python, with **no AI in any rule decision**
+- The deterministic conflict engine: **all seven documented rules**, implemented in Python, with **no AI used in any rule decision**
 - The readiness score, results UI, vault, simulated fix, and re-running detection
 - Honest failure handling: a provider failure keeps the upload, marks the document failed, and stays retryable
 - A simulated fix is reversible per field. Edits stack, undo unwinds them one at a time, and the log records the previous and new value of each
@@ -432,7 +449,7 @@ This is labelled as a **concept / future feature** in the API payload, a persist
 
 ## 🛡️ Safety & Scope Reminder
 
-> **Synthetic demo data only. Not legal advice.**
+> **Synthetic sample data only. Not legal advice.**
 >
 > Do not upload real personal, financial, identity, or estate documents.
 >
@@ -444,6 +461,6 @@ This is labelled as a **concept / future feature** in the API payload, a persist
 
 **🌉 JeevanSetu — Connecting estate records with source-backed clarity**
 
-*Built as a hackathon demo with synthetic data only.*
+*Built as a hackathon project with synthetic data only.*
 
 </div>
