@@ -53,10 +53,7 @@ services:
     autoDeploy: true
     envVars:
       - key: BACKEND_URL
-        fromService:
-          name: jeevansetu-backend
-          type: web
-          property: host
+        value: "jeevansetu-backend-ka2f.onrender.com"
       - key: API_TOKEN
         value: "jeevansetu-secure-token-live"
       - key: PUBLIC_DEPLOYMENT
