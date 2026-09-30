@@ -83,7 +83,11 @@ Correcting the nominee in the vault and re-running detection clears the conflict
 </div>
 
 ---
+### 🌐 Live Demo
 
+**[Open JeevanSetu — Deployed Application](https://jeevansetu-frontend-e82t.onrender.com/)**
+
+</div>
 ## 🔐 Judge Demo Access
 
 > **Synthetic demo environment only.** These credentials are for the judging/demo flow described in this README.
