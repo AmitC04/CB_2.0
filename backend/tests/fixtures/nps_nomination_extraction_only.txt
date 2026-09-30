@@ -1,0 +1,12 @@
+SYNTHETIC TEST DOCUMENT — NOT A REAL NPS FORM
+
+NPS NOMINATION EXTRACTION FIXTURE
+Synthetic PRAN/tier reference: PRAN-FIXTURE-6001/Tier-I
+Subscriber: Ishaan Test-Rao
+Nomination date: 2025-09-20
+Nominee: Naina Test-Rao
+Relationship: Mother
+Share: 100%
+Registration status: Unconfirmed; no CRA, intermediary, or nodal-office receipt is attached.
+
+This text exists only to test software extraction and must not be used for a real NPS account.

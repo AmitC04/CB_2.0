@@ -1,0 +1,12 @@
+SYNTHETIC TEST DOCUMENT — NOT A REAL BANK FORM
+
+DEMO NATIONAL BANK — NOMINATION EXTRACTION FIXTURE
+Form date: 2025-11-02
+Account reference: BANK-FIXTURE-3001
+Account holder: Diya Test-Mehta
+Nominee: Kabir Test-Mehta
+Relationship: Brother
+Share: 100%
+Registration status: This is an unregistered synthetic form; no bank acknowledgement exists.
+
+This text exists only to test software extraction and must not be submitted to any institution.

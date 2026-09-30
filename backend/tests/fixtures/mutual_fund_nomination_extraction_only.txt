@@ -1,0 +1,16 @@
+SYNTHETIC TEST DOCUMENT — NOT A REAL MUTUAL-FUND FORM
+
+DEMO ASSET MANAGEMENT COMPANY — NOMINATION EXTRACTION FIXTURE
+Folio reference: MF-FIXTURE-5001
+Fund: Demo Balanced Opportunities Fund
+Sole holder: Sana Test-Patel
+Form date: 2026-03-05
+Nominee 1: Veer Test-Patel
+Relationship: Son
+Share: 60%
+Nominee 2: Tara Test-Patel
+Relationship: Daughter
+Share: 40%
+Registration status: Unconfirmed; no AMC or RTA acknowledgement is attached.
+
+This text exists only to test software extraction and has no legal effect.

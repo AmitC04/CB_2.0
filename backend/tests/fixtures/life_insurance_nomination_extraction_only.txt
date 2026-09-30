@@ -1,0 +1,15 @@
+SYNTHETIC TEST DOCUMENT — NOT A REAL INSURANCE FORM
+
+DEMO LIFE INSURANCE — BENEFICIARY NOMINATION EXTRACTION FIXTURE
+Policy kind: Life insurance
+Policy reference: LIFE-FIXTURE-4001
+Policyholder: Rohan Test-Iyer
+Nomination date: 2026-02-10
+Beneficiary nominee: Anaya Test-Iyer
+Relationship: Spouse
+Share: 100%
+MWP Act section 6 applicability: Not stated.
+Assignment status: Not stated.
+Registration status: Unconfirmed; this fixture is not an insurer acknowledgement.
+
+This text exists only to test software extraction and has no legal effect.

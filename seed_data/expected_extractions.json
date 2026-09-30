@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "synthetic_only": true,
+  "conflict_persona": {
+    "name": "Aarav Demo-Mehta",
+    "documents": [
+      {
+        "path": "conflict_persona/documents/01_will.pdf",
+        "document_type": "will",
+        "document_date": "2026-01-12",
+        "fields": [
+          [
+            "bank_account",
+            "Sampurna Demo Bank Ltd.",
+            "SB-DEMO-4821",
+            "Anika Demo-Mehta",
+            "daughter",
+            "bequest",
+            null
+          ],
+          [
+            "insurance_policy",
+            "Aarohan Demo Life",
+            "LIFE-DEMO-7710",
+            "Anika Demo-Mehta",
+            "daughter",
+            "bequest",
+            null
+          ],
+          [
+            "mutual_fund_folio",
+            "Nivesh Demo AMC",
+            "MF-DEMO-2040",
+            "Anika Demo-Mehta",
+            "daughter",
+            "bequest",
+            null
+          ]
+        ]
+      },
+      {
+        "path": "conflict_persona/documents/02_bank_nomination.pdf",
+        "document_type": "bank_nomination",
+        "document_date": "2023-05-15",
+        "fields": [
+          [
+            "bank_account",
+            "Sampurna Demo Bank Ltd.",
+            "SB-DEMO-4821",
+            "Kavya Demo-Mehta",
+            "spouse",
+            "nominee",
+            100
+          ]
+        ]
+      },
+      {
+        "path": "conflict_persona/documents/03_insurance_nomination.pdf",
+        "document_type": "insurance_nomination",
+        "document_date": "2025-08-10",
+        "fields": [
+          [
+            "insurance_policy",
+            "Aarohan Demo Life",
+            "LIFE-DEMO-7710",
+            "Anika Demo-Mehta",
+            "daughter",
+            "beneficiary_nominee",
+            100
+          ]
+        ]
+      },
+      {
+        "path": "conflict_persona/documents/04_mutual_fund_nomination.pdf",
+        "document_type": "mutual_fund_nomination",
+        "document_date": "2025-08-11",
+        "fields": [
+          [
+            "mutual_fund_folio",
+            "Nivesh Demo AMC",
+            "MF-DEMO-2040",
+            "Anika Demo-Mehta",
+            "daughter",
+            "nominee",
+            100
+          ]
+        ]
+      }
+    ],
+    "expected_conflicts": [
+      {
+        "rule_id": "BANK-WILL-001",
+        "asset_reference": "SB-DEMO-4821",
+        "will_person": "Anika Demo-Mehta",
+        "nominee_person": "Kavya Demo-Mehta",
+        "legal_winner": null
+      }
+    ],
+    "persona_context": {
+      "owner_has_family": "unknown",
+      "marriage_date": null,
+      "family_context_source_text": null
+    }
+  },
+  "clean_persona": {
+    "name": "Rohan Demo-Sen",
+    "documents": [
+      {
+        "path": "clean_persona/documents/01_will.pdf",
+        "document_type": "will",
+        "document_date": "2026-01-10",
+        "fields": [
+          [
+            "bank_account",
+            "Sampurna Demo Bank Ltd.",
+            "SB-DEMO-8120",
+            "Mira Demo-Sen",
+            "spouse",
+            "bequest",
+            null
+          ],
+          [
+            "insurance_policy",
+            "Aarohan Demo Life",
+            "LIFE-DEMO-9912",
+            "Mira Demo-Sen",
+            "spouse",
+            "bequest",
+            null
+          ]
+        ]
+      },
+      {
+        "path": "clean_persona/documents/02_bank_nomination.pdf",
+        "document_type": "bank_nomination",
+        "document_date": "2025-09-20",
+        "fields": [
+          [
+            "bank_account",
+            "Sampurna Demo Bank Ltd.",
+            "SB-DEMO-8120",
+            "Mira Demo-Sen",
+            "spouse",
+            "nominee",
+            100
+          ]
+        ]
+      },
+      {
+        "path": "clean_persona/documents/03_insurance_nomination.pdf",
+        "document_type": "insurance_nomination",
+        "document_date": "2025-09-21",
+        "fields": [
+          [
+            "insurance_policy",
+            "Aarohan Demo Life",
+            "LIFE-DEMO-9912",
+            "Mira Demo-Sen",
+            "spouse",
+            "beneficiary_nominee",
+            100
+          ]
+        ]
+      }
+    ],
+    "expected_conflicts": [],
+    "persona_context": {
+      "owner_has_family": "unknown",
+      "marriage_date": null,
+      "family_context_source_text": null
+    }
+  },
+  "nps_persona": {
+    "name": "Priya Demo-Iyer",
+    "persona_context": {
+      "owner_has_family": "true",
+      "marriage_date": "2024-03-01",
+      "family_context_source_text": "Synthetic persona record: the demo author confirms Priya Demo-Iyer married on 1 March 2024. This is stated persona context, not extracted from any document."
+    },
+    "documents": [
+      {
+        "path": "nps_persona/documents/01_will.pdf",
+        "document_type": "will",
+        "document_date": "2026-01-15",
+        "fields": [
+          [
+            "nps_account",
+            "Rashtriya Demo Pension CRA",
+            "1100-DEMO-3301",
+            "Rohit Demo-Iyer",
+            "husband",
+            "bequest",
+            null
+          ]
+        ]
+      },
+      {
+        "path": "nps_persona/documents/02_nps_nomination.pdf",
+        "document_type": "nps_nomination",
+        "document_date": "2022-05-01",
+        "fields": [
+          [
+            "nps_account",
+            "Rashtriya Demo Pension CRA",
+            "1100-DEMO-3301",
+            "Nikhil Demo-Sharma",
+            "brother",
+            "nominee",
+            100
+          ]
+        ]
+      }
+    ],
+    "expected_conflicts": [
+      {
+        "rule_id": "NPS-VALIDITY-001",
+        "asset_reference": "1100-DEMO-3301",
+        "will_person": "Rohit Demo-Iyer",
+        "nominee_person": "Nikhil Demo-Sharma",
+        "legal_winner": null
+      }
+    ],
+    "expected_gaps": [],
+    "notes": "The nomination predates the confirmed marriage date and carries no registration acknowledgement, so NPS-VALIDITY-001 fires as a validity warning. NPS-WILL-001 is deliberately suppressed for the same group: the document's own validity is reported first rather than stacking a second finding on it."
+  },
+  "joint_persona": {
+    "name": "Meera Demo-Rao",
+    "persona_context": {
+      "owner_has_family": "unknown",
+      "marriage_date": null,
+      "family_context_source_text": null
+    },
+    "documents": [
+      {
+        "path": "joint_persona/documents/01_will.pdf",
+        "document_type": "will",
+        "document_date": "2026-01-18",
+        "fields": [
+          [
+            "bank_account",
+            "Sampurna Demo Bank Ltd.",
+            "SB-DEMO-6602",
+            "Arjun Demo-Rao",
+            "son",
+            "bequest",
+            null
+          ]
+        ]
+      },
+      {
+        "path": "joint_persona/documents/02_bank_nomination.pdf",
+        "document_type": "bank_nomination",
+        "document_date": "2023-09-12",
+        "fields": [
+          [
+            "bank_account",
+            "Sampurna Demo Bank Ltd.",
+            "SB-DEMO-6602",
+            "Latika Demo-Rao",
+            "sister",
+            "nominee",
+            100
+          ]
+        ]
+      }
+    ],
+    "expected_conflicts": [],
+    "expected_gaps": [
+      {
+        "rule_id": "GAP-JOINT-HOLDING",
+        "asset_reference": "SB-DEMO-6602"
+      }
+    ],
+    "notes": "The account is held jointly, so BANK-WILL-001 does not apply even though the nomination and the will name different people. The engine reports GAP-JOINT-HOLDING, manual review required, instead of a conflict."
+  }
+}

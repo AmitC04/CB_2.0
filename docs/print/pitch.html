@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>JeevanSetu — Pitch</title>
+    <link rel="stylesheet" href="print.css" />
+  </head>
+  <body>
+    <section class="cover">
+      <p class="eyebrow">Hackathon pitch · synthetic data only</p>
+      <h1>JeevanSetu</h1>
+      <p class="tagline">
+        Finds the conflicts between a person's will and their bank, insurance, mutual fund
+        and NPS nominations — while they are still alive to fix them.
+      </p>
+      <dl>
+        <dt>Format</dt>
+        <dd>Four-minute live demo</dd>
+        <dt>Rule set</dt>
+        <dd>7 sourced rules, version 1.0.0-candidate</dd>
+        <dt>Demo data</dt>
+        <dd>11 synthetic documents, 4 personas</dd>
+        <dt>Tests</dt>
+        <dd>136 backend, 33 frontend</dd>
+        <dt>Deployed</dt>
+        <dd>Render, behind a shared credential</dd>
+      </dl>
+      <div class="stop">
+        <span class="label">Read this first</span>
+        <p>
+          Every document, person, institution and identifier in this project is fictional.
+          Nothing here is legal advice, nothing is connected to a real bank, insurer, asset
+          management company or the NPS, and no rule in it decides who legally inherits
+          anything. The tool reports that two documents disagree and quotes both. That is all.
+        </p>
+      </div>
+    </section>
+
+    <h2>1. The one-line version</h2>
+    <p>
+      Every year, nominee-versus-will mismatches turn routine claims into family disputes and
+      delayed settlements. We built the tool that catches them while someone is still alive to
+      fix them.
+    </p>
+
+    <h2>2. The problem, as one concrete story</h2>
+    <p>
+      A person opens a bank account in 2023 and names their spouse as nominee. In 2026 they
+      write a will leaving that same account to their daughter. Both documents are valid.
+      Neither references the other. The bank has never seen the will, and the will was never
+      sent to the bank.
+    </p>
+    <p>
+      Nobody notices until after a death, when the bank settles on its own record and the
+      family discovers the will says something different. That is not a paperwork annoyance.
+      That is the start of a dispute.
+    </p>
+    <p>
+      This happens because every institution in India — banks, insurers, mutual funds, the
+      NPS — independently collects nominee data, and none of them cross-check against a
+      person's will or against each other. The gap is structural, not a one-time
+      inefficiency.
+    </p>
+
+    <h2>3. What we built</h2>
+    <p>Upload a will and the nomination forms. The tool:</p>
+    <ol>
+      <li>
+        Classifies each document and extracts who is named for each asset, under which
+        mechanism, with the exact source text and a locator.
+      </li>
+      <li>
+        Cross-references every document for the same person against a small, sourced rule
+        set.
+      </li>
+      <li>
+        Reports each conflict with both sources quoted, a plain-language explanation, a
+        suggested fix, and the limits of what it can conclude.
+      </li>
+      <li>
+        Produces a Continuity Readiness Score, so there is a reason to come back after each
+        fix.
+      </li>
+    </ol>
+
+    <h2>4. The demo, beat by beat</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 26mm">Beat</th>
+          <th>What the judge sees</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Score</strong></td>
+          <td>
+            <strong>75 / 100</strong> for the conflict persona, with the arithmetic shown on
+            screen: 100 minus 25 for one high-priority conflict.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>The finding</strong></td>
+          <td>
+            One conflict card: <code>BANK-WILL-001</code> on account
+            <code>SB-DEMO-4821</code>. Source A is the bank nomination naming Kavya. Source B
+            is will clause 3.1 naming Anika. Both quoted verbatim from the uploaded PDFs, with
+            the rule ID and the scope note.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Fix it live</strong></td>
+          <td>
+            Change the nominee in the vault, press re-run: the score goes to
+            <strong>100</strong> and the conflict clears.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Undo it</strong></td>
+          <td>
+            Press undo: the original extracted value comes back and the score returns to
+            <strong>75</strong>. The edit stays in the log.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Contrast</strong></td>
+          <td>A second persona whose documents agree scores 100 with no findings.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="small muted">
+      The whole demo runs from a fresh clone in about 40 seconds with no API key, using a
+      clearly labelled pre-verified extraction snapshot.
+    </p>
+
+    <h3>Two more personas, for the questions that follow</h3>
+    <p>
+      These exist to show that the tool distinguishes three different kinds of answer rather
+      than labelling everything a conflict.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 40mm">Persona</th>
+          <th>What it demonstrates</th>
+          <th class="num">Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Priya Demo-Iyer</strong><br /><span class="small muted">validity warning</span></td>
+          <td>
+            Her NPS nomination predates her confirmed marriage date, so
+            <code>NPS-VALIDITY-001</code> questions that one document's standing rather than
+            reporting a disagreement between two. The will-mismatch rule is deliberately
+            suppressed here instead of stacked on top, which is the rule ordering made visible.
+          </td>
+          <td class="num">75</td>
+        </tr>
+        <tr>
+          <td><strong>Meera Demo-Rao</strong><br /><span class="small muted">manual review required</span></td>
+          <td>
+            Her nomination and will name different people for the same account, which would
+            normally be <code>BANK-WILL-001</code>. It is not, because the account is held
+            jointly and that rule covers individually held accounts. The tool reports
+            <code>GAP-JOINT-HOLDING</code> and declines to judge.
+          </td>
+          <td class="num">97</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="small muted">
+      Say the 97 out loud before a judge spots it: leaving rule scope <em>raises</em> the
+      score, because a gap deducts 3 where a conflict deducts 25. A gap is not a clean bill of
+      health, and the card says manual review required.
+    </p>
+
+    <h2>5. The credibility answers</h2>
+
+    <h3>"Is the AI deciding what counts as a conflict?"</h3>
+    <p>
+      No. AI extracts fields and rewords a finding after the fact. Every rule decision is
+      deterministic Python in one file, <code>detection.py</code>, which imports no model
+      client — and a test asserts both that its source contains no AI reference and that
+      constructing a model client during detection fails. That is why we can show you the rule
+      that fired and the exact text it fired on.
+    </p>
+
+    <h3>"Are these real legal rules?"</h3>
+    <p>
+      Seven rules, each sourced to a Supreme Court judgment, the Insurance Act, a SEBI
+      circular or the PFRDA regulations, all written down in <code>RULES.md</code> with the
+      predicate, the severity, the exclusions and worked examples. We re-verified every source
+      before the demo. We deliberately encoded nothing we could not source: SEBI published a
+      March 2026 consultation paper proposing new nomination norms, and because it is still a
+      draft, no rule is based on it. Where the law is unsettled, the tool says "manual review
+      required" instead of guessing.
+    </p>
+
+    <h3>"Does it tell people who legally inherits?"</h3>
+    <p>
+      Never. That is the discipline that makes it usable. It says these two documents
+      disagree, here is the text, here is who to ask. Every result carries a not-legal-advice
+      disclaimer, and model wording is rejected outright if it contains a legal conclusion —
+      phrases like "legally owns", "overrides the will" or "is the legal heir" fail a
+      deterministic check before the text ever reaches the screen.
+    </p>
+
+    <h3>"What happens when the API fails?"</h3>
+    <p>
+      The upload is kept, the document is marked failed, and it stays retryable. If AI wording
+      fails, the finding still appears with its deterministic summary and both sources. For
+      the demo we ship a pre-verified fallback snapshot, and the interface labels it as
+      "pre-verified fallback data, not a live AI extraction" rather than passing it off as
+      live.
+    </p>
+
+    <h3>"Can you undo what you just changed?"</h3>
+    <p>
+      Yes. Every simulated fix is logged with its previous and new value, and undo unwinds
+      edits one at a time. Re-extraction refuses to discard your edits unless explicitly
+      forced. A fix only ever changes the extracted synthetic record — never an uploaded
+      document, never an institution's record.
+    </p>
+
+    <h2 class="page-break">6. Why this is a company, not a feature</h2>
+    <ul>
+      <li>
+        <strong>The wedge:</strong> a sharp, free-to-try tool that finds real conflicts. The
+        value is immediate and needs no institutional partnership.
+      </li>
+      <li>
+        <strong>It compounds:</strong> fixing one conflict pulls the user into adding the next
+        account, and life events — marriage, a child, a new policy — invalidate old
+        nominations. Re-use is built into the problem, not bolted on.
+      </li>
+      <li>
+        <strong>Two expansion paths that need no integration:</strong> paid deeper reviews and
+        family access on the consumer side; an embeddable pre-claim check for banks, insurers
+        and wealth managers who also lose money to disputed claims. We never need write access
+        to anyone's account — only documents the user chooses to share.
+      </li>
+      <li>
+        <strong>The second act:</strong> settlement workflows become viable later precisely
+        because the hard data problem — incomplete, conflicting nominee data — was already
+        solved earlier in the user's life.
+      </li>
+    </ul>
+
+    <h2>7. What we are not claiming</h2>
+    <ul>
+      <li>Not connected to any bank, insurer, asset management company or the NPS.</li>
+      <li>Not a legal opinion, and not exhaustive of Indian succession law.</li>
+      <li>
+        Not tested on real documents. Every document in the demo is synthetic and marked as
+        such, and the upload path requires an explicit synthetic attestation.
+      </li>
+      <li>
+        Joint holdings are recognised and deliberately excluded from the rules: a joint asset
+        is reported as "manual review required", not as a conflict. A document that does not
+        state its holding pattern is still checked, and that residual risk is written down.
+      </li>
+      <li>
+        Four of the seven rules are not exercised by any seeded persona and are covered only
+        by unit tests. The demo shows one rule firing, one suppressed, one gap, and one clean
+        result.
+      </li>
+      <li>
+        The hosted instance has no user accounts, no persistent storage, and one shared
+        password. It sleeps after 15 minutes idle.
+      </li>
+      <li>
+        The per-institution settlement checklist is labelled <strong>Concept / Future
+        Feature</strong> in the API payload and on its own page. It is an illustration, not an
+        integration, and it touches neither the rule engine nor the score.
+      </li>
+    </ul>
+
+    <h2>8. If asked what is next</h2>
+    <ol>
+      <li>
+        Life-event reminders, since a marriage silently invalidates certain NPS nominations.
+      </li>
+      <li>
+        A reviewed expansion of the rule set, one sourced rule at a time, starting with the
+        asset types currently excluded.
+      </li>
+      <li>A hosted demo behind real access control.</li>
+      <li>
+        Postgres and a migration path, replacing the single-file SQLite the prototype resets
+        on a schema change.
+      </li>
+    </ol>
+
+    <h2>9. The numbers, if you are asked</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Claim</th>
+          <th class="num">Figure</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Sourced deterministic rules</td><td class="num">7</td></tr>
+        <tr><td>Labelled out-of-scope markers (never presented as rules)</td><td class="num">7</td></tr>
+        <tr><td>Fields extracted per named person, each with source text</td><td class="num">18</td></tr>
+        <tr><td>Synthetic demo documents</td><td class="num">11</td></tr>
+        <tr><td>Demo personas, one per possible outcome</td><td class="num">4</td></tr>
+        <tr><td>Backend tests</td><td class="num">136</td></tr>
+        <tr><td>Frontend tests</td><td class="num">33</td></tr>
+        <tr><td>Fresh clone to a working demo</td><td class="num">~40 s</td></tr>
+        <tr><td>AI calls involved in any conflict decision</td><td class="num">0</td></tr>
+      </tbody>
+    </table>
+
+    <footer class="disclaimer">
+      JeevanSetu is a hackathon prototype built on synthetic documents. Not legal advice. The
+      rule set is a limited, India-scoped first pass; a licensed legal professional and the
+      relevant institution should review any real document.
+    </footer>
+  </body>
+</html>

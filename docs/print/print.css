@@ -1,0 +1,302 @@
+/* Shared print stylesheet for the JeevanSetu PDF handouts. */
+
+@page {
+  size: A4;
+  margin: 18mm 16mm 20mm 16mm;
+}
+
+:root {
+  --ink: #0f172a;
+  --muted: #475569;
+  --line: #cbd5e1;
+  --teal: #0f766e;
+  --teal-soft: #f0fdfa;
+  --amber: #92400e;
+  --amber-soft: #fffbeb;
+  --rose: #9f1239;
+  --rose-soft: #fff1f2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 10.5pt;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* --- Cover ------------------------------------------------------------- */
+
+.cover {
+  page-break-after: always;
+  padding-top: 26mm;
+}
+
+.cover .eyebrow {
+  font-size: 9pt;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--teal);
+  font-weight: 700;
+  margin: 0 0 6mm 0;
+}
+
+.cover h1 {
+  font-size: 30pt;
+  line-height: 1.1;
+  margin: 0 0 4mm 0;
+  letter-spacing: -0.01em;
+}
+
+.cover .tagline {
+  font-size: 13pt;
+  color: var(--muted);
+  margin: 0 0 10mm 0;
+  max-width: 130mm;
+}
+
+.cover dl {
+  display: grid;
+  grid-template-columns: 38mm 1fr;
+  gap: 2mm 6mm;
+  margin: 0 0 12mm 0;
+  font-size: 9.5pt;
+}
+
+.cover dt {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 8pt;
+  padding-top: 0.6mm;
+}
+
+.cover dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* --- Headings ---------------------------------------------------------- */
+
+h2 {
+  font-size: 15pt;
+  margin: 9mm 0 3mm 0;
+  padding-bottom: 1.5mm;
+  border-bottom: 1.5pt solid var(--teal);
+  page-break-after: avoid;
+}
+
+h3 {
+  font-size: 11.5pt;
+  margin: 6mm 0 2mm 0;
+  page-break-after: avoid;
+}
+
+h4 {
+  font-size: 10pt;
+  margin: 4mm 0 1.5mm 0;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  page-break-after: avoid;
+}
+
+p {
+  margin: 0 0 3mm 0;
+  orphans: 3;
+  widows: 3;
+}
+
+ul,
+ol {
+  margin: 0 0 3mm 0;
+  padding-left: 6mm;
+}
+
+li {
+  margin-bottom: 1.2mm;
+}
+
+strong {
+  font-weight: 700;
+}
+
+a {
+  color: var(--teal);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+code {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  background: #f1f5f9;
+  padding: 0.3mm 1mm;
+  border-radius: 1mm;
+}
+
+pre {
+  background: #f8fafc;
+  border: 0.5pt solid var(--line);
+  border-radius: 1.5mm;
+  padding: 3mm;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 8.5pt;
+  line-height: 1.45;
+  overflow: visible;
+  white-space: pre-wrap;
+  page-break-inside: avoid;
+  margin: 0 0 3mm 0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* --- Tables ------------------------------------------------------------ */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9pt;
+  margin: 0 0 4mm 0;
+  page-break-inside: avoid;
+}
+
+thead th {
+  text-align: left;
+  border-bottom: 1pt solid var(--ink);
+  padding: 1.5mm 2mm 1.5mm 0;
+  font-size: 8.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+tbody td {
+  border-bottom: 0.4pt solid var(--line);
+  padding: 1.6mm 2mm 1.6mm 0;
+  vertical-align: top;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+td.num,
+th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding-right: 0;
+}
+
+/* --- Callouts ---------------------------------------------------------- */
+
+.note,
+.warn,
+.stop {
+  border-left: 2.5pt solid var(--teal);
+  background: var(--teal-soft);
+  padding: 3mm 4mm;
+  margin: 0 0 4mm 0;
+  page-break-inside: avoid;
+  font-size: 9.5pt;
+}
+
+.warn {
+  border-left-color: var(--amber);
+  background: var(--amber-soft);
+}
+
+.stop {
+  border-left-color: var(--rose);
+  background: var(--rose-soft);
+}
+
+.note p:last-child,
+.warn p:last-child,
+.stop p:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  display: block;
+  font-size: 8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 1mm;
+}
+
+.note .label {
+  color: var(--teal);
+}
+
+.warn .label {
+  color: var(--amber);
+}
+
+.stop .label {
+  color: var(--rose);
+}
+
+/* --- Layout helpers ---------------------------------------------------- */
+
+.page-break {
+  page-break-before: always;
+}
+
+.avoid-break {
+  page-break-inside: avoid;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 8mm;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 9pt;
+}
+
+.toc ol {
+  list-style: none;
+  padding-left: 0;
+  counter-reset: toc;
+}
+
+.toc li {
+  counter-increment: toc;
+  border-bottom: 0.4pt dotted var(--line);
+  padding: 1.2mm 0;
+}
+
+.toc li::before {
+  content: counter(toc) ". ";
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+footer.disclaimer {
+  margin-top: 8mm;
+  padding-top: 3mm;
+  border-top: 0.5pt solid var(--line);
+  font-size: 8.5pt;
+  color: var(--muted);
+}

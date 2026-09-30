@@ -1,0 +1,27 @@
+# Secrets and local configuration
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# SQLite and uploaded files
+backend/data/*
+!backend/data/.gitkeep
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/*.tsbuildinfo
+
+# Local review artifacts, kept out of history like the earlier phases
+semantic-review/
+
+# Editors and macOS
+.DS_Store
+.vscode/
+.idea/

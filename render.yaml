@@ -1,0 +1,91 @@
+# Render Blueprint for the JeevanSetu demo.
+#
+# Two Docker web services on the free plan. Read docs/DEPLOYMENT.md before syncing this:
+# the free plan has no persistent disk and no private services, which shapes every choice
+# below.
+#
+#   * The backend is publicly reachable, so API_TOKEN is generated and required. Without
+#     it the API would be an open write endpoint.
+#   * The frontend is the only thing a human should open, and it sits behind one shared
+#     username and password. That also covers the /api/backend proxy, which otherwise
+#     relays requests anonymously.
+#   * SQLite lives on ephemeral storage under /tmp. The database is empty after every
+#     cold start, so SEED_ON_STARTUP re-inserts the pre-verified synthetic snapshot.
+#     Nothing of value is stored, and every document is synthetic.
+#
+# A free instance spins down after about 15 minutes of inactivity. The first request after
+# that takes roughly a minute while both services wake and the backend reseeds.
+
+services:
+  - type: web
+    name: jeevansetu-backend
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./docker/backend.Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Required. The backend is public on the free plan, so this is what stops anyone
+      # from uploading documents and spending the Gemini quota.
+      - key: API_TOKEN
+        generateValue: true
+      # Ephemeral by necessity: persistent disks need a paid instance.
+      - key: DATABASE_PATH
+        value: /tmp/jeevansetu/jeevansetu.db
+      - key: UPLOAD_DIR
+        value: /tmp/jeevansetu/uploads
+      # Re-inserts the labelled fallback snapshot when the database comes up empty.
+      - key: SEED_ON_STARTUP
+        value: "true"
+      - key: MAX_UPLOAD_BYTES
+        value: "10485760"
+      # The browser never calls the backend directly; it goes through the frontend proxy.
+      # No browser origin is allowed, so a stray cross-origin call cannot succeed.
+      - key: CORS_ORIGINS
+        value: ""
+      # Optional. Leave unset and the demo still runs on the pre-verified snapshot, but
+      # live extraction and the plain-language wording will be unavailable.
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
+
+  - type: web
+    name: jeevansetu-frontend
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./docker/frontend.Dockerfile
+    dockerContext: .
+    # Not "/": every other path is behind the shared credential and answers 401, which a
+    # health check reads as a failure and the deploy would never go live. /healthz returns
+    # a fixed "ok" and reads nothing.
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      # Render supplies the hostname without a scheme; the proxy route defaults a bare
+      # host to https.
+      - key: BACKEND_URL
+        fromService:
+          name: jeevansetu-backend
+          type: web
+          property: host
+      # Same token as the backend. If Render rejects this reference, set the value
+      # manually to match the backend's API_TOKEN.
+      - key: API_TOKEN
+        fromService:
+          name: jeevansetu-backend
+          type: web
+          envVarKey: API_TOKEN
+      # Tells the frontend it is on the internet. With this set, a missing username or
+      # password makes the service refuse traffic instead of serving it unprotected.
+      - key: PUBLIC_DEPLOYMENT
+        value: "true"
+      - key: BASIC_AUTH_USER
+        value: judge
+      # Render generates this. Read it from the service's Environment tab and share it
+      # with whoever needs access.
+      - key: BASIC_AUTH_PASSWORD
+        generateValue: true

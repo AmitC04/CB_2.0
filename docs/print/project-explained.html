@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>JeevanSetu — How the project works</title>
+    <link rel="stylesheet" href="print.css" />
+  </head>
+  <body>
+    <section class="cover">
+      <p class="eyebrow">Engineering walkthrough</p>
+      <h1>JeevanSetu,<br />end to end</h1>
+      <p class="tagline">
+        What every part of the codebase does, why it was built that way, and exactly where the
+        honest limits are.
+      </p>
+      <dl>
+        <dt>Repository</dt>
+        <dd>citibank2.0, branch main</dd>
+        <dt>Backend</dt>
+        <dd>FastAPI · Python 3.12+ · SQLite</dd>
+        <dt>Frontend</dt>
+        <dd>Next.js 16 · React 19 · Tailwind 4</dd>
+        <dt>AI</dt>
+        <dd>Gemini Developer API, free tier</dd>
+        <dt>Tests</dt>
+        <dd>128 backend · 19 frontend</dd>
+      </dl>
+      <div class="note">
+        <span class="label">How to read this</span>
+        <p>
+          Sections 1 to 4 explain the shape of the system. Sections 5 to 8 are the parts that
+          decide anything, and they are the ones worth understanding properly. Sections 9 to 13
+          cover running it, testing it, and everything that is deliberately unfinished.
+        </p>
+      </div>
+    </section>
+
+    <h2>Contents</h2>
+    <div class="toc">
+      <ol>
+        <li>What the product actually does</li>
+        <li>The one architectural rule that shapes everything</li>
+        <li>System map</li>
+        <li>The data model</li>
+        <li>Step 1 — upload and validation</li>
+        <li>Step 2 — AI extraction</li>
+        <li>Step 3 — deterministic detection</li>
+        <li>Step 4 — scoring, explanations, and the UI</li>
+        <li>Simulated fixes and undo</li>
+        <li>The rule set and its sources</li>
+        <li>Running, seeding, and demoing it</li>
+        <li>Tests, and what they actually guarantee</li>
+        <li>Deployment, and what is deliberately unfinished</li>
+      </ol>
+    </div>
+
+    <h2 class="page-break">1. What the product actually does</h2>
+    <p>
+      A person's assets are promised to people twice, in two places that never talk to each
+      other. A bank nomination form says one name. A will says another. Both are valid
+      documents; nothing in either one points at the other.
+    </p>
+    <p>
+      JeevanSetu takes a set of documents belonging to one person, extracts who is named for
+      which asset in each of them, and cross-references them against a small set of rules
+      drawn from Indian primary sources. When two documents disagree about the same asset, it
+      reports a <em>review conflict</em>: both quotes side by side, the rule that fired, what
+      the rule can and cannot conclude, and a suggested next step.
+    </p>
+    <p>
+      It never says who inherits. That distinction runs through the whole codebase and is the
+      reason the design looks the way it does.
+    </p>
+
+    <h3>The three kinds of output</h3>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 34mm">Finding type</th>
+          <th>Means</th>
+          <th class="num">Score cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>review_conflict</code></td>
+          <td>Two documents name different people for the same asset under an approved rule.</td>
+          <td class="num">25 or 10</td>
+        </tr>
+        <tr>
+          <td><code>validity_warning</code></td>
+          <td>
+            One document's own status is doubtful — for example an NPS nomination that appears
+            to predate a marriage with no confirmed replacement.
+          </td>
+          <td class="num">25 or 10</td>
+        </tr>
+        <tr>
+          <td><code>scope_gap</code></td>
+          <td>
+            The engine met a case the rules deliberately exclude. Labelled "manual review
+            required". Never a conflict, never above low severity.
+          </td>
+          <td class="num">3</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. The one architectural rule that shapes everything</h2>
+    <div class="note">
+      <span class="label">The boundary</span>
+      <p>
+        AI may read documents and may reword a finding. AI may never decide whether a rule
+        matched. Every conflict decision is plain Python.
+      </p>
+    </div>
+    <p>
+      This is enforced, not just intended. <code>backend/app/detection.py</code> imports no
+      model client at all. Two tests hold that line: one greps the module source and fails if
+      it contains any reference to the AI SDK; the other constructs a poisoned environment so
+      that creating a model client during <code>detect()</code> would raise, then runs a full
+      detection to prove nothing tries.
+    </p>
+    <p>Concretely, AI is used in exactly two places:</p>
+    <ul>
+      <li>
+        <strong>Extraction.</strong> Given a document, return structured fields plus the exact
+        source text each value came from.
+      </li>
+      <li>
+        <strong>Explanation.</strong> Given a finding the engine has <em>already decided</em>,
+        write two short paragraphs a non-lawyer can read. If this call fails, the finding still
+        appears with its deterministic summary.
+      </li>
+    </ul>
+    <p>
+      Because of this split, every result on screen can be traced to a rule ID and a quoted
+      sentence. There is no step where the answer came from a model's judgment.
+    </p>
+
+    <h2>3. System map</h2>
+    <pre><code>Browser (Next.js, :3000)
+  │   app/page.tsx                    persona list
+  │   app/personas/[id]/page.tsx      results, score, vault
+  │   app/personas/[id]/estate-case   concept page (clearly labelled)
+  │   app/api/backend/[...path]       server-side proxy, for hosting only
+  ▼
+FastAPI (:8000)
+  ├── main.py          app wiring, CORS, optional API token, /health
+  ├── api.py           all routes, orchestration, error mapping
+  ├── uploads.py       validation and generated storage keys
+  ├── extraction.py    Gemini classification + structured extraction
+  ├── detection.py     the 7 rules and the gap markers   ← no AI, ever
+  ├── scoring.py       readiness score + completeness gaps
+  ├── explanations.py  Gemini wording for decided findings
+  ├── estate_case.py   the labelled concept view
+  ├── repository.py    every SQL statement lives here
+  ├── db.py            connection, schema version guard
+  └── SQLite           backend/data/jeevansetu.db</code></pre>
+    <p>
+      The layering is strict in one direction: routes call the repository, the repository owns
+      all SQL, and the rule engine is a pure function that receives a list of records and
+      returns a list of findings. The engine never touches the database, the network, or the
+      clock.
+    </p>
+
+    <h2>4. The data model</h2>
+    <p>
+      Six tables. Schema version 4. There is no migration framework: on a version change the
+      backend refuses to start and tells you to delete the synthetic database, which is
+      acceptable precisely because all the data is disposable.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 36mm">Table</th>
+          <th>Holds</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>personas</code></td><td>One synthetic individual. The unit everything hangs off.</td></tr>
+        <tr>
+          <td><code>documents</code></td>
+          <td>
+            One upload: filename, MIME type, generated storage key, SHA-256 of the content,
+            classified type, document date, status, and whether extraction was live or
+            fallback.
+          </td>
+        </tr>
+        <tr>
+          <td><code>extracted_fields</code></td>
+          <td>
+            One named person, for one asset, under one mechanism — plus the exact source text
+            and locator it came from. 18 columns per row.
+          </td>
+        </tr>
+        <tr>
+          <td><code>field_edits</code></td>
+          <td>The log of simulated fixes: previous value, new value, and whether it was undone.</td>
+        </tr>
+        <tr><td><code>detection_runs</code></td><td>One detection run: the rules version used and the resulting score.</td></tr>
+        <tr><td><code>conflicts</code></td><td>The findings of a run, conflicts and gaps alike, distinguished by <code>finding_type</code>.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>The field that does the real work</h3>
+    <p>
+      An <code>extracted_fields</code> row is not just "Kavya is the nominee". It carries every
+      qualifier the rules need in order to stay inside their documented scope:
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 44mm">Column</th>
+          <th>Why a rule needs it</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>asset_reference</code></td>
+          <td>
+            Two documents are only compared when they point at the same asset. No reference
+            means no comparison, and a gap instead.
+          </td>
+        </tr>
+        <tr><td><code>mechanism_type</code></td><td>Separates a nomination from a will bequest. The comparison is always one against the other.</td></tr>
+        <tr><td><code>registration_status</code>, <code>registration_date</code></td><td>Possession of a form does not prove the institution recorded it. Only a confirmed registration with a real date can supersede another record.</td></tr>
+        <tr><td><code>policy_kind</code>, <code>mwpa_section_6_applies</code>, <code>assignment_status</code></td><td>The insurance rules apply only to a life policy that is not under the Married Women's Property Act and has no active assignment.</td></tr>
+        <tr><td><code>holding_pattern</code></td><td>The bank and mutual-fund rules are scoped to single-holder assets. A joint asset leaves rule scope.</td></tr>
+        <tr><td><code>source_text</code>, <code>source_locator</code></td><td>Every value on screen can be traced to a sentence and a page or clause. This is what makes a finding checkable.</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="page-break">5. Step 1 — upload and validation</h2>
+    <p><code>POST /personas/{id}/documents</code>, handled by <code>uploads.py</code>.</p>
+    <ul>
+      <li>
+        <strong>Synthetic attestation is mandatory.</strong> The request must carry
+        <code>synthetic_confirmed=true</code> or it is rejected with
+        <code>synthetic_confirmation_required</code>. This is a product decision, not
+        paperwork: the Gemini free tier permits Google to use submitted content to improve its
+        products, so real documents must never enter.
+      </li>
+      <li>
+        <strong>Four independent checks.</strong> Extension allowlist
+        (<code>.pdf .png .jpg .jpeg .webp .txt</code>), declared MIME type matching that
+        extension, a size ceiling of 10 MB, and a SHA-256 of the content for identity.
+      </li>
+      <li>
+        <strong>Generated storage keys.</strong> The file is never written under its uploaded
+        name, so a hostile filename cannot influence the path.
+      </li>
+    </ul>
+
+    <h2>6. Step 2 — AI extraction</h2>
+    <p>
+      <code>extraction.py</code> makes one multimodal Gemini call per document that both
+      classifies the document and extracts every named person in it.
+    </p>
+    <ul>
+      <li>
+        <strong>Structured output, not parsed prose.</strong> The call passes an explicit JSON
+        response schema, so the model returns typed fields rather than text that has to be
+        interpreted. The schema is hand-written and flat, because handing the SDK a nested
+        Pydantic model made it emit a key the API rejected.
+      </li>
+      <li>
+        <strong>Source text is required per value.</strong> The prompt requires the exact
+        sentence and a locator for every field. A value with no evidence is not useful, because
+        the whole interface is built on showing the user what the document said.
+      </li>
+      <li>
+        <strong>Unknown is a first-class answer.</strong> Qualifiers use explicit
+        <code>unknown</code> values rather than being guessed. The rules then decide what to do
+        with uncertainty, which is a deterministic decision, rather than the model deciding by
+        filling in a blank.
+      </li>
+      <li>
+        <strong>Failure is visible and recoverable.</strong> A provider error keeps the upload,
+        marks the document <code>failed</code> with an error code, and leaves it retryable. It
+        never silently produces empty fields.
+      </li>
+      <li>
+        <strong>Prompt-injection hardening.</strong> Document text is wrapped in delimiters and
+        any attempt inside the document to close those delimiters is stripped, so a sentence in
+        an uploaded file cannot pose as an instruction.
+      </li>
+    </ul>
+
+    <h2>7. Step 3 — deterministic detection</h2>
+    <p>
+      <code>detection.py</code> is a pure function: records in, findings out. It is the heart
+      of the project and contains no AI, no I/O, and no randomness.
+    </p>
+
+    <h3>Fixed order, because order changes the answer</h3>
+    <pre><code>1. NPS-VALIDITY-001            a document's own validity comes first
+2. LIFE-NOTICE-001             then the notice-to-insurer question
+3. RECORD-SUPERSESSION-001     then which record the institution holds
+4. BANK / LIFE / MF / NPS will-mismatch rules
+5. Scope gaps (GAP-*)          everything the rules exclude
+6. finalize()                  dedupe, then order by severity</code></pre>
+    <p>
+      The ordering exists so findings suppress each other correctly. If an NPS nomination looks
+      invalid on its own terms, saying "it also disagrees with the will" is noise, so the
+      will-mismatch rule is suppressed for that group and the validity warning is shown
+      instead. Deduplication is by rule, asset and the unordered pair of sources, so the same
+      disagreement cannot be reported twice.
+    </p>
+
+    <h3>Matching two documents is deliberately conservative</h3>
+    <ul>
+      <li>
+        <strong>Same asset</strong> requires the institution and normalised asset reference to
+        agree. A near-match — a truncated reference, an institution-name variant — produces
+        <code>GAP-ASSET-NEAR-MATCH</code> rather than being treated as either the same asset or
+        a clean result.
+      </li>
+      <li>
+        <strong>Different people</strong> is a name comparison after normalisation, and a
+        confirmed alias can resolve it. A spelling variation alone never proves two different
+        people.
+      </li>
+      <li>
+        <strong>Nothing is inferred from dates.</strong> "The newest document wins" is written
+        down as an explicit non-rule. A later file date proves nothing; only a confirmed
+        registration date with the institution can establish supersession.
+      </li>
+    </ul>
+
+    <h3>Gap markers: the mechanism that keeps it honest</h3>
+    <p>
+      When the engine meets a case the rules exclude, it does not force it through the nearest
+      rule and it does not stay silent. It emits a <code>GAP-</code> marker: severity
+      <code>low</code>, type <code>scope_gap</code>, displayed as "manual review required". The
+      prefix exists so a gap can never be mistaken for an approved rule ID.
+    </p>
+    <table>
+      <thead>
+        <tr><th style="width: 58mm">Marker</th><th>Fires when</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>GAP-JOINT-HOLDING</code></td><td>The asset is held jointly, so the single-holder rules do not apply.</td></tr>
+        <tr><td><code>GAP-LIFE-SCOPE</code></td><td>An insurance nomination is not a confirmed plain life policy.</td></tr>
+        <tr><td><code>GAP-NPS-RELATIONSHIP</code></td><td>A nominee's relationship is neither clearly inside nor clearly outside the regulation's family definition.</td></tr>
+        <tr><td><code>GAP-ASSET-REFERENCE</code></td><td>A record has no asset reference, so matching is impossible.</td></tr>
+        <tr><td><code>GAP-ASSET-NEAR-MATCH</code></td><td>Two records nearly match on the asset, but not exactly.</td></tr>
+        <tr><td><code>GAP-UNSUPPORTED-SUPERSESSION</code></td><td>Two records disagree on an asset outside supersession scope.</td></tr>
+        <tr><td><code>GAP-MISSING-NOMINATION</code></td><td>The will assigns an asset with no nomination record uploaded at all.</td></tr>
+      </tbody>
+    </table>
+    <p>
+      A test enforces this: it greps the engine, the scoring module and the routes for
+      <code>GAP-</code> strings and fails if any of them is missing from
+      <code>RULES.md</code>. An undocumented marker is treated as an undocumented rule.
+    </p>
+
+    <h2 class="page-break">8. Step 4 — scoring, explanations, and the UI</h2>
+
+    <h3>The Continuity Readiness Score</h3>
+    <pre><code>score = 100 − (25 × high) − (10 × medium) − (3 × gap),  clamped to 0…100</code></pre>
+    <p>
+      Deliberately simple arithmetic, shown on screen with its own breakdown, so a user can see
+      why the number moved. The breakdown separates conflicts from gaps by
+      <em>finding type</em>, not by severity — an earlier version partitioned by severity and
+      displayed validity warnings under the conflicts heading, which review caught.
+    </p>
+    <div class="warn">
+      <span class="label">Worth understanding</span>
+      <p>
+        Leaving rule scope <em>raises</em> the score: a gap costs 3 where a conflict costs 25.
+        The same joint bank account that would score 75 as a conflict scores 97 as a gap. That
+        is why the score is labelled "review priority for synthetic documents, not legal
+        readiness" everywhere it appears, and why a gap card says manual review required rather
+        than anything reassuring.
+      </p>
+    </div>
+    <p>
+      A run recorded before scoring existed has a null score. The UI states that explicitly and
+      invites a re-run, rather than rendering it as a red <em>0 / 100</em> — an early version
+      did exactly that, next to a green "no conflicts found" panel.
+    </p>
+
+    <h3>Explanations</h3>
+    <p>
+      For each decided finding, Gemini is asked for a plain-language paragraph and a suggested
+      fix. Four constraints:
+    </p>
+    <ul>
+      <li>At most 10 findings per run get a model explanation, bounding free-tier usage.</li>
+      <li>The finding is already decided; the model is told the outcome, never asked for it.</li>
+      <li>
+        Wording containing a legal conclusion is rejected outright by a deterministic phrase
+        check — "legally owns", "rightful owner", "overrides the will", "is the legal heir" and
+        similar.
+      </li>
+      <li>
+        If the call fails or is rejected, the card shows its deterministic summary and says the
+        plain-language wording is unavailable. Scope gaps never show that notice, because they
+        were never meant to have model wording.
+      </li>
+    </ul>
+
+    <h3>What the interface guarantees</h3>
+    <ul>
+      <li>Every finding card carries the rule ID, the scope note and the disclaimer.</li>
+      <li>Conflicts and gaps are in separate sections with separate headings.</li>
+      <li>
+        The vault shows the original extracted quote beside every value, so an edited value can
+        never be mistaken for the document's own text.
+      </li>
+      <li>
+        Fallback seed data is labelled "pre-verified fallback data, not a live AI extraction".
+        Live extraction names the model that produced it.
+      </li>
+      <li>
+        The score card is marked stale after an edit until detection is re-run, so a number can
+        never quietly describe an older state.
+      </li>
+    </ul>
+
+    <h2>9. Simulated fixes and undo</h2>
+    <p>
+      The vault lets you change a named person, which is what makes the demo interactive: fix
+      the conflict, re-run, watch the score move.
+    </p>
+    <ul>
+      <li>
+        <strong>Only the extracted record changes.</strong> Never the uploaded document, never
+        an institution's record. The UI says so.
+      </li>
+      <li>
+        <strong>Every real edit is logged</strong> with its previous and new value.
+        <code>POST /fields/{id}/undo</code> reverts the most recent edit that has not been
+        undone; edits unwind one at a time, and the "edited" badge clears only when none
+        remain.
+      </li>
+      <li>
+        <strong>Saving an unchanged value is not an edit.</strong> Otherwise the interface would
+        claim a change that never happened.
+      </li>
+      <li>
+        <strong>Re-extraction protects your edits.</strong>
+        <code>POST /documents/{id}/extract</code> returns 409 if it would discard user edits,
+        unless you pass <code>force=true</code>. A forced re-extraction replaces the document's
+        fields and removes their edit history with them — that boundary is documented rather
+        than glossed over.
+      </li>
+    </ul>
+
+    <h2>10. The rule set and its sources</h2>
+    <p>
+      Seven rules, version <code>1.0.0-candidate</code>, each with a predicate, a severity, its
+      exclusions and worked examples in <code>backend/rules/RULES.md</code>. Sources were
+      re-verified on 29 September 2026.
+    </p>
+    <table>
+      <thead>
+        <tr><th style="width: 52mm">Rule</th><th>Primary source</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>BANK-WILL-001</code><br /><span class="small muted">Bank nominee differs from will recipient</span></td>
+          <td>Supreme Court of India, <em>Ram Chander Talwar v. Devender Kumar Talwar</em>, applying Banking Regulation Act s. 45ZA</td>
+        </tr>
+        <tr>
+          <td><code>LIFE-NOTICE-001</code><br /><span class="small muted">Will changes a life nomination but insurer notice is unconfirmed</span></td>
+          <td>Insurance Act 1938, s. 39(2)–(3)</td>
+        </tr>
+        <tr>
+          <td><code>LIFE-WILL-001</code><br /><span class="small muted">Life nominee differs from will recipient</span></td>
+          <td>Insurance Act 1938, s. 39(6)–(7), with s. 38 and s. 39(12) as exclusions</td>
+        </tr>
+        <tr>
+          <td><code>MF-WILL-001</code><br /><span class="small muted">Folio nominee differs from will recipient</span></td>
+          <td>SEBI circular of 28 February 2025 and its Annexure A nomination form</td>
+        </tr>
+        <tr>
+          <td><code>NPS-WILL-001</code><br /><span class="small muted">Valid-looking NPS nominee differs from will recipient</span></td>
+          <td>PFRDA (Exits and Withdrawals under the NPS) Regulations 2015, Chapter VII</td>
+        </tr>
+        <tr>
+          <td><code>NPS-VALIDITY-001</code><br /><span class="small muted">NPS nomination appears invalid after marriage</span></td>
+          <td>Same PFRDA regulation, nomination provisos (iv)–(vi)</td>
+        </tr>
+        <tr>
+          <td><code>RECORD-SUPERSESSION-001</code><br /><span class="small muted">Conflicting records with no proven supersession chain</span></td>
+          <td>The registration provisions across all four sources above</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>What the rules explicitly refuse to say</h3>
+    <p><code>RULES.md</code> section 9 lists these as non-rules, and tests assert the engine never produces them:</p>
+    <ul>
+      <li>"The newest dated document automatically wins."</li>
+      <li>"A nominee always owns the asset", or "a will always overrides a nominee", or the reverse.</li>
+      <li>Who is a legal heir, or whether any document, signature, marriage or relationship is valid.</li>
+      <li>That holding a nomination form proves the institution registered it.</li>
+      <li>That a missing nomination is a conflict — it is a completeness gap.</li>
+      <li>Anything about joint accounts, lockers, general insurance, demat shares, trusts, tax, creditors or foreign assets.</li>
+      <li>Anything drawn from the March 2026 SEBI consultation draft, because it is still a draft.</li>
+    </ul>
+
+    <h2 class="page-break">11. Running, seeding, and demoing it</h2>
+    <pre><code>cp .env.example .env          # GEMINI_API_KEY optional for the default demo
+docker compose up -d --build
+docker compose exec backend python scripts/seed_demo.py --yes</code></pre>
+    <p>Then open <code>http://localhost:3000</code>. Both ports bind to loopback only.</p>
+
+    <h3>Two seed modes, and why the distinction matters</h3>
+    <table>
+      <thead>
+        <tr><th style="width: 30mm">Mode</th><th>What it does</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>fallback</strong><br /><span class="small muted">default</span></td>
+          <td>
+            Inserts a pre-verified snapshot of earlier live extraction output and labels it
+            <code>manual_fallback</code>. No API key, no network call, about a second. The UI
+            says the data is not a live extraction.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>live</strong><br /><span class="small muted"><code>--mode live</code></span></td>
+          <td>
+            Uploads all eleven synthetic PDFs and extracts each one with Gemini. Needs a key,
+            takes a few minutes, retries on provider errors.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      The snapshot is never hand-edited. <code>scripts/export_demo_fallback.py</code>
+      regenerates it from a live-seeded database and refuses to export anything that is not
+      live extraction output or that contains a user edit — otherwise the
+      <code>manual_fallback</code> label would be a lie.
+    </p>
+
+    <h3>The four personas, one per possible outcome</h3>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 38mm">Persona</th>
+          <th>Documents and what they produce</th>
+          <th class="num">Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Aarav Demo-Mehta</strong><br /><span class="small muted">review conflict</span></td>
+          <td>
+            Will, bank nomination, insurance nomination, mutual fund nomination. The will leaves
+            account <code>SB-DEMO-4821</code> to Anika; the bank form names Kavya, so
+            <code>BANK-WILL-001</code> fires. The insurance and mutual fund records agree with
+            the will, so those rules correctly stay silent.
+          </td>
+          <td class="num">75</td>
+        </tr>
+        <tr>
+          <td><strong>Rohan Demo-Sen</strong><br /><span class="small muted">nothing found</span></td>
+          <td>Will, bank nomination, insurance nomination, all naming the same person.</td>
+          <td class="num">100</td>
+        </tr>
+        <tr>
+          <td><strong>Priya Demo-Iyer</strong><br /><span class="small muted">validity warning</span></td>
+          <td>
+            Will plus an NPS nomination dated before her confirmed marriage, with no
+            registration acknowledgement. <code>NPS-VALIDITY-001</code> questions that
+            document's own standing, and <code>NPS-WILL-001</code> is suppressed for the same
+            group rather than stacked on top. Her marriage date is stated on the persona
+            record, never extracted, because the rules may not infer family status from a
+            document's silence.
+          </td>
+          <td class="num">75</td>
+        </tr>
+        <tr>
+          <td><strong>Meera Demo-Rao</strong><br /><span class="small muted">manual review required</span></td>
+          <td>
+            Will plus a bank nomination on a jointly held account. The two name different
+            people, which would be <code>BANK-WILL-001</code> on an individual account, but the
+            holding pattern puts it outside rule scope, so the engine emits
+            <code>GAP-JOINT-HOLDING</code> and draws no conclusion.
+          </td>
+          <td class="num">97</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="small muted">
+      Aarav fires exactly one conflict by design: one unambiguous finding is more convincing in
+      four minutes than five noisy ones. The other three exist so the demo can show a clean
+      result, a validity warning and a scope gap as visibly different things. Note Meera's 97 —
+      leaving rule scope raises the score, as section 8 explains.
+    </p>
+    <p>
+      Four of the seven rules still fire only in unit tests: <code>LIFE-NOTICE-001</code>,
+      <code>LIFE-WILL-001</code>, <code>MF-WILL-001</code> and <code>NPS-WILL-001</code>. That
+      is a gap between what the rule set covers and what the demo can show, and it is recorded
+      rather than glossed over.
+    </p>
+
+    <h2>12. Tests, and what they actually guarantee</h2>
+    <p>
+      136 backend tests and 33 frontend tests. Counts are not the point; what they hold is. The
+      interesting ones enforce the promises rather than the code:
+    </p>
+    <ul>
+      <li>
+        <strong>The AI boundary.</strong> <code>detection.py</code> contains no model
+        reference, and constructing a client during a detection run fails.
+      </li>
+      <li>
+        <strong>Rules match their document.</strong> Summaries, scope notes and suggested
+        actions are compared against <code>RULES.md</code>, so code and documentation cannot
+        drift apart.
+      </li>
+      <li>
+        <strong>Every gap marker is documented.</strong> A marker in the code that is missing
+        from <code>RULES.md</code> fails the suite.
+      </li>
+      <li>
+        <strong>Each rule has a positive and a negative case</strong>, asserting the rule ID,
+        severity, both sources and the exact disclaimer.
+      </li>
+      <li>
+        <strong>The demo numbers.</strong> 75 with one <code>BANK-WILL-001</code>, 100 after the
+        fix, back to 75 after undo, 100 for the clean persona.
+      </li>
+      <li>
+        <strong>The labels.</strong> Frontend tests pin the null-score wording, the
+        conflict-versus-gap distinction, the disclaimer, the fallback label, the original-quote
+        label and the joint-holding notice — the exact strings the project promised never to
+        misstate.
+      </li>
+      <li>
+        <strong>The schema guard.</strong> An outdated database refuses to start rather than
+        failing later at query time.
+      </li>
+    </ul>
+    <p class="small muted">
+      Three independent semantic reviews during the build returned NEEDS_CHANGES and caught
+      real defects: a stale acknowledgement check, a cross-account NPS leak, supersession
+      decided by file date, a null score rendered as a red zero, a double-counted gap, a 401
+      with no CORS headers, and a deployment document that overstated what its token gate
+      closed. All were fixed before the work was committed.
+    </p>
+
+    <h2>13. Deployment, and what is deliberately unfinished</h2>
+    <p>
+      The stack runs on Render as two free-plan Docker web services, described by
+      <code>render.yaml</code> in the repository root. Three pieces make that safe:
+    </p>
+    <ul>
+      <li>
+        <strong>A shared token on the API.</strong> With <code>API_TOKEN</code> set, every route
+        except <code>/health</code> requires a bearer header. The free plan has no private
+        services, so the backend is publicly reachable and this is not optional there. CORS
+        wraps the check, so a rejected browser request shows a real 401 rather than an opaque
+        network failure.
+      </li>
+      <li>
+        <strong>A server-side proxy.</strong> The browser calls <code>/api/backend</code> and
+        the Next.js server attaches the token, so the credential never reaches the browser
+        bundle.
+      </li>
+      <li>
+        <strong>A credential in front of everything.</strong> One shared username and password,
+        checked on every request including the proxy, because the proxy relays whatever reaches
+        it. Only <code>/healthz</code> is exempt, and it returns a fixed string. On an instance
+        marked public, a missing credential returns 503 rather than serving traffic.
+      </li>
+    </ul>
+    <p>
+      Two things the free plan forces. There is no persistent disk, so SQLite lives under
+      <code>/tmp</code> and <code>SEED_ON_STARTUP</code> re-inserts the labelled snapshot on
+      every cold start: uploads and edits do not survive a restart, and the demo always begins
+      in a known state. And a free instance sleeps after about 15 minutes idle, so the first
+      request afterwards takes roughly a minute.
+    </p>
+
+    <h3>The honest limitations list</h3>
+    <table>
+      <thead>
+        <tr><th style="width: 46mm">Limitation</th><th>Why it is acceptable here</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>No user accounts or authentication</td>
+          <td>
+            The hosted instance has one shared password. That is a door with one key, enough to
+            share a demo URL, but it identifies nobody and has no rate limiting.
+          </td>
+        </tr>
+        <tr>
+          <td>SQLite with no migrations, and no disk when hosted</td>
+          <td>
+            All data is synthetic and disposable; a schema change resets it deliberately, and a
+            hosted cold start reseeds from the labelled snapshot.
+          </td>
+        </tr>
+        <tr>
+          <td>A joint asset extracted as <code>unknown</code> is still checked</td>
+          <td>
+            Most documents do not state a holding pattern. Excluding unknown would silently skip
+            most records, which is worse. Written down in <code>RULES.md</code> section 14.
+          </td>
+        </tr>
+        <tr>
+          <td>Four of the seven rules fire only in tests</td>
+          <td>
+            The seeded personas cover a conflict, a clean result, a validity warning and a scope
+            gap. <code>LIFE-NOTICE-001</code>, <code>LIFE-WILL-001</code>,
+            <code>MF-WILL-001</code> and <code>NPS-WILL-001</code> are unit-tested but not
+            clickable.
+          </td>
+        </tr>
+        <tr>
+          <td>No institution integration at all</td>
+          <td>By design. The product needs only documents the user chooses to share.</td>
+        </tr>
+        <tr>
+          <td>The settlement checklist is a mock</td>
+          <td>
+            Labelled <strong>Concept / Future Feature</strong> in the API payload and on its own
+            page, and excluded from <code>RULES.md</code> because its steps are not sourced
+            rules.
+          </td>
+        </tr>
+        <tr>
+          <td>Frontend tests cover components, not pages</td>
+          <td>The three tested components carry every safety-critical label; pages are verified by hand.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Where to look next in the repository</h3>
+    <table>
+      <thead>
+        <tr><th style="width: 54mm">File</th><th>Why you would open it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>backend/rules/RULES.md</code></td><td>The authoritative rule set: sources, predicates, exclusions, gap markers.</td></tr>
+        <tr><td><code>backend/app/detection.py</code></td><td>The engine. Every conflict decision in the product is in this one file.</td></tr>
+        <tr><td><code>DECISIONS.md</code></td><td>Every architectural decision with its reasoning and what was rejected.</td></tr>
+        <tr><td><code>PROGRESS.md</code></td><td>Phase-by-phase status, including the one box still open.</td></tr>
+        <tr><td><code>docs/DEPLOYMENT.md</code></td><td>What hosting would take, and what the token gate does not do.</td></tr>
+        <tr><td><code>reports/</code></td><td>A completion report per phase, plus the gap-closure report.</td></tr>
+      </tbody>
+    </table>
+
+    <footer class="disclaimer">
+      JeevanSetu is a hackathon prototype operating on synthetic documents. Not legal advice.
+      The rule set is a limited, India-scoped first pass and is not authoritative; a licensed
+      legal professional and the relevant institution should review any real document.
+    </footer>
+  </body>
+</html>

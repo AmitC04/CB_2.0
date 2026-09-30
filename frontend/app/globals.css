@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f4f7fa;
+  --foreground: #0f172a;
+  
+  --color-gov-navy: #0B192C; 
+  --color-gov-blue: #1A4D2E; /* Actually let's use true Gov Blue */
+  --color-gov-true-blue: #003366; 
+  --color-gov-saffron: #FF9933;
+  --color-gov-green: #138808;
+  --color-gov-white: #FFFFFF;
+  
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-gov-navy: var(--color-gov-navy);
+  --color-gov-blue: var(--color-gov-true-blue);
+  --color-gov-saffron: var(--color-gov-saffron);
+  --color-gov-green: var(--color-gov-green);
+  
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #f4f7fa;
+  /* Premium subtle background: dot grid + soft mesh gradients */
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(210,100%,95%,1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(28,100%,94%,1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(120,50%,95%,1) 0px, transparent 50%),
+    radial-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 20px 20px;
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Premium Utilities */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-card-hover {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.glass-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.08);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+/* Specific component styles */
+.score-arc {
+  transition: stroke-dasharray 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.2);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.3);
+}

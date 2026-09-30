@@ -1,0 +1,13 @@
+SYNTHETIC TEST DOCUMENT — NOT A REAL WILL
+
+LAST WILL (EXTRACTION FIXTURE ONLY)
+Document date: 2026-01-15
+Testator: Aarav Test-Kapoor
+
+Clause 4 — Synthetic bank account
+I give all my interest in the savings account at Demo National Bank, account reference BANK-FIXTURE-1001, to my sister Mira Test-Kapoor.
+
+Clause 5 — Synthetic mutual fund
+I give all units in the Demo Growth Fund, folio reference MF-FIXTURE-2001, to my brother Neel Test-Kapoor.
+
+This text exists only to test software extraction. It has no legal effect.
