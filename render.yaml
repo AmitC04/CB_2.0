@@ -21,7 +21,6 @@ services:
     name: jeevansetu-backend
     runtime: docker
     plan: free
-    region: singapore
     dockerfilePath: ./docker/backend.Dockerfile
     dockerContext: .
     healthCheckPath: /health
@@ -48,7 +47,6 @@ services:
     name: jeevansetu-frontend
     runtime: docker
     plan: free
-    region: singapore
     dockerfilePath: ./docker/frontend.Dockerfile
     dockerContext: .
     healthCheckPath: /healthz
